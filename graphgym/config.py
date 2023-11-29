@@ -578,7 +578,7 @@ def set_run_dir(out_dir):
         makedirs_rm_exist(cfg.run_dir)
 
 
-set_cfg(cfg)
+# set_cfg(cfg)
 
 
 def from_config(func):
@@ -606,3 +606,16 @@ def from_config(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+# 1. set default cfg values first, some modules in contrib might rely on this
+set_cfg(cfg)
+
+# 2. load the graph contrib tree to register custom configs
+import graphgym.contrib.config
+
+# 3. re-register custom configs into cfg #TODO: has error for import custmized configs
+for func in register.config_dict.values():
+    func(cfg)
+
+print(cfg)
+
