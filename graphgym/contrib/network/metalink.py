@@ -5,12 +5,35 @@ from deepsnap.batch import Batch
 
 from graphgym.config import cfg
 from graphgym.init import init_weights
-from graphgym.models.feature_augment import Preprocess
+# from graphgym.models.feature_augment import Preprocess
 from graphgym.models.gnn import GNNPreMP, stage_dict
 from graphgym.models.layer import MLP, GeneralLayer, layer_dict
 from graphgym.models.pooling import pooling_dict
 from graphgym.register import register_network
 
+
+class Preprocess(nn.Module):
+    def __init__(self, dim_in):
+        super(Preprocess, self).__init__()
+        self.dim_dict = {
+            name: dim
+            for name, dim in zip(cfg.dataset.augment_feature,
+                                 cfg.dataset.augment_feature_dims)
+        }
+        self.dim_dict['node_feature'] = dim_in
+        self.dim_out = sum(self.dim_dict.values())
+
+    def extra_repr(self):
+        repr_str = '\n'.join([
+            '{}: dim_out={}'.format(name, dim)
+            for name, dim in self.dim_dict.items()
+        ] + ['Total: dim_out={}'.format(self.dim_out)])
+        return repr_str
+
+    def forward(self, batch):
+        batch.node_feature = torch.cat(
+            [batch[name].float() for name in self.dim_dict], dim=1)
+        return batch
 
 class StackHeteConv(nn.Module):
     '''Simple Stage that stack GNN layers'''
